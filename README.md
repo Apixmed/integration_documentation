@@ -242,7 +242,7 @@ Payload
   "patientData": object (PatientData),
   "patientDataCustom" : object (PatientDataCustom),
   "date": string,
-  "requestId": string
+  "requestId": string,
   "checksum": string
 }
 ```
