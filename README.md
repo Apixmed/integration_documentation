@@ -57,6 +57,9 @@ Currently, Apixmed does not have a B2B backoffice in place. Our team will be res
 Collect user data via your application and let the user to define the treatment.
 
 **Required data:**
+- **Date** - represents the date (yyyyMMddhhmmsszzz) of the request payload's creation. It serves the purpose of setting a boundary for the object's lifetime, with a maximum allowable lifetime of 24 hours.
+- **RequestId** - is a universally unique identifier (UUID/GUID) that is generated on the client side. It functions as a distinctive and exclusive identifier, ensuring the uniqueness of each request.
+
 - **Email** - will be used to send Apixmed URL to see the report to user
 - **Gender** - user gender
 - **Age** - user age, in years
@@ -238,6 +241,8 @@ Payload
 {
   "patientData": object (PatientData),
   "patientDataCustom" : object (PatientDataCustom),
+  "date": string,
+  "requestId": string
   "checksum": string
 }
 ```
@@ -275,9 +280,9 @@ PatientDataCustom object
 
 ### Checksum calculation
 
-Checksum should be calculated based on values of PatientData object and your organization account secret by concatenating all field to a single string:
+Checksum should be calculated based on values of PatientData object and system predefined fields ('Date' and 'RequestId') and your organization account secret by concatenating all field to a single string:
 
-`{email}{gender}{age}{weight}{height}{diseaseIds}{medicationIds}{secret}`
+`{date}{requestId}{email}{gender}{age}{weight}{height}{diseaseIds}{medicationIds}{secret}`
 
 **arrays must be sorted alphabetically and only then concatenated to a single string*
 
