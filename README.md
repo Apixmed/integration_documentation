@@ -263,6 +263,7 @@ PatientData object
 ```
 PatientDataCustom object
 {
+    "userCorrelationId": string, // not mandatory, required if you want get and bulkget of created reports.
   // this object depends on data that your organization can provide
   // contact our team to agree its format
 }
