@@ -1,4 +1,4 @@
-# Treatment checker integration guide
+# Treatment checker integration guide (ver. 0.1.0)
 
 Here, you'll find step-by-step documentation and clear instructions for integrating your applications with Apixmed treatment checker.
 
@@ -11,7 +11,10 @@ Production
 - WEB APP URL: https://apixmed.com
 
 > [IMPORTANT]
+> 
 > If your organization intends to utilize the sandbox as well, it is necessary to follow the same process.
+> 
+> Also there is test organization on samdbox (but its usage is limited); see its parameters provided in this guide.
 
 ## 1. Setup your organisation profile and account
 
@@ -36,14 +39,14 @@ Currently, Apixmed does not have a B2B backoffice in place. Our team will be res
   <summary>Example</summary>
 
 - **Organization**
-  - Id = `"TestOrganization"`
+  - Id = `"test"`
   - Name = `"TestOrganizationName"`
   - Description = `"Test Organization Description: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eleifend nisl quis nisl egestas, at rhoncus tortor eleifend. Fusce finibus eros justo, nec vehicula sem elementum eu. Aliquam at ligula id dolor pretium tempus. Donec malesuada est non arcu consectetur aliquam. Curabitur ornare vitae justo vel ultricies. Nulla facilisi. Sed aliquet nulla enim, tristique consequat diam tincidunt at. Proin convallis venenatis mi in tincidunt. Aenean mi magna, molestie quis mauris id, aliquam finibus felis. Donec sed turpis a metus placerat ullamcorper. Mauris dapibus porta nibh, ac sodales eros fermentum et."`
 
 - **Account**
-  - **Id** = `"testorganizationaccount"`
+  - **Id** = `"testpremium"`
   - **Name** = `"Test organization primary account"`
-  - **Secret** = `"TestOrganizationSecret"`
+  - **Secret** = `"secret12312312312"`
   - **ApplyPayloadEncryption** = `false`
   - **PublicKey** = `null`
   - **UseFhirServer** = `false`
@@ -128,7 +131,7 @@ DiseaseCombobox
 
 **Request**
 
-`GET` `api/TestOrganization/testorganizationaccount/tags/diseases?searchPattern=heart`
+`GET` `api/test/testpremium/tags/diseases?searchPattern=heart`
 
 Headers:
 - `Accept-Language`: `en`
@@ -201,7 +204,7 @@ MedicationCombobox
 
 **Request**
 
-`GET` `api/TestOrganization/testorganizationaccount/tags/medications?searchPattern=heart`
+`GET` `api/test/testpremium/tags/medications?searchPattern=heart`
 
 Headers:
 - `Accept-Language`: `en`
@@ -236,9 +239,11 @@ Headers:
 ```
 Payload
 {
-  "patientData": object (PatientData),
-  "patientDataCustom" : object (PatientDataCustom),
-  "checksum": string
+    "patientData": object (PatientData),
+    "patientDataCustom" : object (PatientDataCustom),
+    "date": string,
+    "requestId": string,
+    "checksum": string
 }
 ```
 
@@ -258,8 +263,8 @@ PatientData object
 ```
 PatientDataCustom object
 {
-  // this object depends on data that your organization can provide
-  // contact our team to agree its format
+    "userCorrelationId": string
+    // Other fields of this object depends on data that your organization can provide. Contact our team to agree its format.
 }
 ```
 
@@ -275,9 +280,14 @@ PatientDataCustom object
 
 ### Checksum calculation
 
-Checksum should be calculated based on values of PatientData object and your organization account secret by concatenating all field to a single string:
+Each payload that contains checksum must also contain request protection fields:
 
-`{email}{gender}{age}{weight}{height}{diseaseIds}{medicationIds}{secret}`
+- **Date** - represents the date (yyyyMMddhhmmss) of the request payload's creation. It serves the purpose of setting a boundary for the object's lifetime, with a maximum allowable lifetime of 24 hours on production.
+- **RequestId** - is an identifier of operation on client side and must be unique for each request (if you do not track these requests on your side, just generate GUID/UID for every new payload). It functions as a distinctive and exclusive identifier, ensuring the uniqueness of each request.
+
+Checksum should be calculated based on request protection fields ('date' and 'requestId'), values of PatientData object and your organization account secret by concatenating all field to a single string:
+
+`{date}{requestId}{email}{gender}{age}{weight}{height}{diseaseIds}{medicationIds}{secret}`
 
 **arrays must be sorted alphabetically and only then concatenated to a single string*
 
@@ -301,7 +311,7 @@ Response
 }
 ```
 
-### Report as JSON
+### Report (short) as JSON
 
 Also you are able to get the report as `json` via Apixmed API endpoint:
 
@@ -314,58 +324,85 @@ Also you are able to get the report as `json` via Apixmed API endpoint:
 <details>
   <summary>Example for checksum calculation</summary>
 
+- Define date and requestId
+```json
+{
+    "date": "20230829080101",
+    "requestId": "00000000-0000-0000-0001-000000000001"
+}
+```
 - Define PatientData object
 ```
 PatientData object
 {
-    "email": "example@email.com",
+    "email": "support@apixmed.com",
     "gender": "male",
-    "age": 40,
+    "age": 30, 
     "weight": 85,
     "height": 182,
-    "diseaseIds": [
-      "disease-id-1",
-      "disease-id-2"
-    ],
-    "medicationIds": [
-      "medication-id-2",
-      "medication-id-1"
-    ],
+    "diseaseIds": [ "7b42cffc-d931-4604-82e8-5e505ca70d68" ],
+    "medicationIds": [ "a8c39e64-b5b8-41f6-9a2f-0974a0f8ccc4" ]
 }
 ```
-- Concatenate fields: `example@email.commale4085182disease-id-1disease-id-2medication-id-1medication-id-2`
-- Attach secret (example value secret is `example-secret`): `example@email.commale4085182disease-id-1disease-id-2medication-id-1medication-id-2example-secret`
-- Hash with SHA-512: `bf3c70a67149dcb9d88a63647a9436dd369184193237f6c5cc9bfbade2067882a75972fe5139abbd4233efd49c9dc8822b3e191b00e2076200603bdc24b53e8f`
+- Concatenate fields: `2023082908010100000000-0000-0000-0001-000000000001support@apixmed.commale30851827b42cffc-d931-4604-82e8-5e505ca70d68a8c39e64-b5b8-41f6-9a2f-0974a0f8ccc4`
+- Attach secret (here secret value is `secret12312312312`): `2023082908010100000000-0000-0000-0001-000000000001support@apixmed.commale30851827b42cffc-d931-4604-82e8-5e505ca70d68a8c39e64-b5b8-41f6-9a2f-0974a0f8ccc4secret12312312312`
+- Hash with SHA-512: `11dcbb170c7455a9445e445ffd92070bd4163715192bfb36456ed531ab9297814faba03edd6b1b88d6b0219dfe75cf8a023f04c05e4825dde2dbe009a8d7b4dd`
 
 </details>
 
 <details>
   <summary>Example of full payload</summary>
 
-`POST` `api/treatment-checker/generate/TestOrganization/testorganizationaccount`
+`POST` `api/treatment-checker/generate/test/testpremium`
 
 Header:
   - `Accept-Language`: `en`
 
 ```json
 {
-  "patientData": {
-    "email": "example@email.com",
-    "gender": "male",
-    "age": 40,
-    "weight": 85,
-    "height": 182,
-    "diseaseIds": [
-      "disease-id-1",
-      "disease-id-2"
-    ],
-    "medicationIds": [
-      "medication-id-2",
-      "medication-id-1"
-    ],
-  },
-  "patientDataCustom": null,
-  "checksum": "bf3c70a67149dcb9d88a63647a9436dd369184193237f6c5cc9bfbade2067882a75972fe5139abbd4233efd49c9dc8822b3e191b00e2076200603bdc24b53e8f"
+    "date": "20230829080101",
+    "requestId": "00000000-0000-0000-0001-000000000001",
+    "patientData": {
+        "email": "support@apixmed.com",
+        "gender": "male",
+        "age": 30, 
+        "weight": 85,
+        "height": 182,
+        "diseaseIds": [ "7b42cffc-d931-4604-82e8-5e505ca70d68" ],
+        "medicationIds": [ "a8c39e64-b5b8-41f6-9a2f-0974a0f8ccc4" ]
+    },
+    "patientDataCustom": {
+        "userCorrelationId": "TestUser"
+    },
+    "checksum": "11dcbb170c7455a9445e445ffd92070bd4163715192bfb36456ed531ab9297814faba03edd6b1b88d6b0219dfe75cf8a023f04c05e4825dde2dbe009a8d7b4dd"
+}
+```
+
+Full request code
+```
+POST /api/treatment-checker/generate/test/testpremium HTTP/1.1
+Host: dev.api.apixmed.com
+Accept-Language: en
+Content-Type: application/json
+Cookie: ARRAffinity=89efd111daa527202afd96706276879a655817e73c32546fe91ee34fcedb8b04; ARRAffinitySameSite=89efd111daa527202afd96706276879a655817e73c32546fe91ee34fcedb8b04
+Content-Length: 620
+
+{
+    "date": "20230829080101",
+    "requestId": "00000000-0000-0000-0001-000000000001",
+    "patientData": {
+        "email": "support@apixmed.com",
+        "gender": "male",
+        "age": 30, 
+        "weight": 85,
+        "height": 182,
+        "diseaseIds": [ "7b42cffc-d931-4604-82e8-5e505ca70d68" ],
+        "medicationIds": [ "a8c39e64-b5b8-41f6-9a2f-0974a0f8ccc4" ]
+    },
+    "patientDataCustom": {
+        "userCorrelationId": "TestUser"
+    },
+    "checksum": "11dcbb170c7455a9445e445ffd92070bd4163715192bfb36456ed531ab9297814faba03edd6b1b88d6b0219dfe75cf8a023f04c05e4825dde2dbe009a8d7b4dd"
 }
 ```
 
@@ -376,14 +413,16 @@ Header:
 
 ```json
 {
-  "reportId": "0000000-1111-0000-0000-000000000001",
-  "reportUrl": "https://apixmed.com/treatment-checker/TestOrganization/reports/0000000-1111-0000-0000-000000000001"
+    "reportId": "3a903870-9991-482d-551f-08dba868e05e",
+    "reportUrl": "https://dev.apixmed.com/treatment-checker/test/reports/3a903870-9991-482d-551f-08dba868e05e"
 }
 ```
 
 </details>
 
-## 4. Redirect your user to the report
+## 4. Show the report to the user
+
+### Show by direct URL
 
 The most simple flow is to redirect user to the Apixmed Web App URL where he will be able to check his report by report Id:
 
@@ -394,8 +433,146 @@ The alternative option is to open the report URL in iframe.
 <details>
   <summary>Example</summary>
 
-`treatment-checker/TestOrganization/reports/0000000-1111-0000-0000-000000000001`
+`https://dev.apixmed.com/treatment-checker/test/reports/3a903870-9991-482d-551f-08dba868e05e`
 
 </details>
 
 ***Also user will be notified on provided email with Apixmed URL to open generated report.***
+
+### Show reports generated by user
+
+There are two ways to show treatment checker history for your user:
+1. Pass `userCorrelationId` field in `PatientDataCustom` object for each report generated by your organization. Use array of items from response to get reportId and then show concrete report as described below.
+2. Implement history of reports on your side (based on requestId and reportId).
+
+### Endpoint information: retrieve treatment cheker history for user
+
+- HTTP method: `POST`
+- URL: `/api/treatment-checker/getbulk/{organizationId}/{organizationAccountId}`
+- Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
+
+```
+Payload
+{
+    "date": string
+    "requestId": string,
+    "indexFrom": number,
+    "pageIndex": number,
+    "pageSize": number,
+    "filter": {
+        "userCorrelationIds": string[]
+    },
+    "checksum": string
+}
+```
+
+Checksum should be calculated based on request protection fields ('date' and 'requestId') and your organization account secret by concatenating all field to a single string:
+
+`{date}{requestId}{secret}`
+
+**arrays must be sorted alphabetically and only then concatenated to a single string*
+
+This string should be hashed with SHA512 (see [wikipedia](https://en.wikipedia.org/wiki/SHA-2)).
+
+<details>
+  <summary>Example of full request code</summary>
+
+```
+POST /api/treatment-checker/getbulk/test/testpremium HTTP/1.1
+Host: dev.api.apixmed.com
+Accept-Language: en
+Content-Type: application/json
+Cookie: ARRAffinity=89efd111daa527202afd96706276879a655817e73c32546fe91ee34fcedb8b04; ARRAffinitySameSite=89efd111daa527202afd96706276879a655817e73c32546fe91ee34fcedb8b04
+Content-Length: 377
+
+{
+    "date":"20230829094130",
+    "requestId": "00000000-0000-0000-0002-000000000001",
+    "indexFrom": null,
+    "pageIndex": null,
+    "pageSize": 50,
+    "filter": {
+        "UserCorrelationIds": ["TestUser"]
+    },
+    "checksum": "7b6d3d28e588f10f1210323c12ced0319d95aa4702eeada482b343c77663d943a08e745bfbe603f464723309e1cbc96b349451b8a32c1e6b34d1c6155e14e6c2"
+}
+```
+
+</details>
+
+<details>
+  <summary>Example of response</summary>
+
+```
+{
+    "indexFrom": 1,
+    "pageIndex": 1,
+    "pageSize": 50,
+    "sorting": "Id",
+    "filter": {
+        "userCorrelationIds": [
+            "TestUser"
+        ],
+        "organizationAccountId": "testpremium",
+        "organizationId": "test"
+    },
+    "items": [
+        {
+            "id": "3a903870-9991-482d-551f-08dba868e05e",
+            "createdOn": "2023-08-29T08:46:29.0566667+00:00",
+            "treatmentInfo": {
+                "age": 30,
+                "height": 182.0,
+                "weight": 85.0,
+                "diseases": [
+                    {
+                        "id": "7b42cffc-d931-4604-82e8-5e505ca70d68",
+                        "displayText": "Heart failure, unspecified",
+                        "type": "circulatory"
+                    }
+                ],
+                "medications": [
+                    {
+                        "id": "a8c39e64-b5b8-41f6-9a2f-0974a0f8ccc4",
+                        "displayText": "Warfarin sodium",
+                        "type": "bloodAndBloodFormingOrgans"
+                    }
+                ]
+            },
+            "cautions": [
+                {
+                    "type": "isNotPartOfAnyDiseaseTreatment",
+                    "severity": "warning",
+                    "parameters": [
+                        "Warfarin sodium"
+                    ]
+                },
+                {
+                    "type": "bMIAdultOverweight",
+                    "severity": "info",
+                    "parameters": [
+                        "25.66",
+                        "18",
+                        "25"
+                    ]
+                },
+                {
+                    "type": "treatmentGuidelinesAvailable",
+                    "severity": "info",
+                    "parameters": [
+                        "Heart failure",
+                        "Cardiovascular disease",
+                        "Heart disease"
+                    ]
+                }
+            ]
+        }
+    ],
+    "hasNextPage": false,
+    "hasPreviousPage": false,
+    "totalCount": 1,
+    "totalPages": 1
+}
+```
+
+</details>
