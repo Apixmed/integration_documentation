@@ -173,8 +173,8 @@ Headers:
 
 **Request parameters:**
 
-- organizationId - Id of your organization.
-- organizationAccountId - account Id of your organization.
+- organizationId - Id of your organization. Required.
+- organizationAccountId - account Id of your organization. Required.
 - searchParameter - parameter to filter diseases by name.
 - sorting - parameter to sort diseases. Allowed values can be combined with `,`. Allowed values: `frequency asc` `frequency desc` `atc asc`, `atc desc` `inn asc`, `inn desc`
 - ids - parameter to filter diseases by ids that are listed.
@@ -223,6 +223,7 @@ MedicationCombobox
 
 Headers:
 - `Accept-Language`: `en`
+- `Accept-Language`: `europe-eu`
 
 **Response**
 
