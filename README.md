@@ -142,7 +142,7 @@ DiseaseCombobox
 
 Headers:
 - `Accept-Language`: `en`
-- `Accept-Language`: `europe-eu`
+- `Accept-Region`: `europe-eu`
 
 **Response**
 
@@ -223,7 +223,7 @@ MedicationCombobox
 
 Headers:
 - `Accept-Language`: `en`
-- `Accept-Language`: `europe-eu`
+- `Accept-Region`: `europe-eu`
 
 **Response**
 
