@@ -1,4 +1,4 @@
-# Treatment checker integration guide (ver. 0.1.0)
+# Treatment checker integration guide
 
 Here, you'll find step-by-step documentation and clear instructions for integrating your applications with Apixmed treatment checker.
 
@@ -14,7 +14,7 @@ Production
 > 
 > If your organization intends to utilize the sandbox as well, it is necessary to follow the same process.
 > 
-> Also there is test organization on samdbox (but its usage is limited); see its parameters provided in this guide.
+> Also there is a test organization on sandbox (but its usage is limited); see its parameters provided in this guide.
 
 ## 1. Setup your organisation profile and account
 
@@ -28,9 +28,9 @@ Currently, Apixmed does not have a B2B backoffice in place. Our team will be res
 - **Account**
   - **Id** - (*required*) an alphanumeric string (English letters and numbers); this Id will be used in Apixmed API URLs.
   - **Name** - (*required*) the user friendly name of account that will be used for internal and cross-team usage (users will not be able to see this).
-  - **Secret** - (*required*) an alphanumeric string (English letters and numbers) that will be used for checksum generation.
+  - **Secret** - (*required*) an alphanumeric string (English letters, numbers and common special symbols) that will be used for checksum generation.
   - **ApplyPayloadEncryption** - (*required*) boolean value where `true` means that an additional encryption will be applied to payload provided to Apixmed during treatment checker report generation.
-  - **PublicKey** - (*required in case when **ApplyPayloadEncryption** is `true`*) a string value that will be used for decryption payload during the treatment checker report generation.
+  - **EncryptionKey** - (*required in case when **ApplyPayloadEncryption** is `true`*) a string value that will be used for decryption payload during the treatment checker report generation.
   - **UseFhirServer** - (*required*) a boolean value where `true` means that Apixmed will be allowed to use FHIR server (see [FHIR documentation](http://hl7.org/fhir/)) of your organization to retrieve patient information.
   - **FhirServerUrl** - (*required in case when **UseFhirServer** is `true`*) a base API URL of your organization FHIR server.
   - **FhirServerCreds** - (*required in case when **UseFhirServer** is `true`*) creds for Apixmed to access your FHIR server to retrieve patient data.
@@ -48,7 +48,7 @@ Currently, Apixmed does not have a B2B backoffice in place. Our team will be res
   - **Name** = `"Test organization primary account"`
   - **Secret** = `"secret12312312312"`
   - **ApplyPayloadEncryption** = `false`
-  - **PublicKey** = `null`
+  - **EncryptionKey** = `null`
   - **UseFhirServer** = `false`
   - **FhirServerUrl** = `null`
   - **FhirServerCreds** = `null`
@@ -75,16 +75,23 @@ Diseases and medications are the required part of any treatment and Apixmed prov
 ### Diseases
 
 - HTTP method: `GET`
-- URL: `api/{organizationId}/{organizationAccountId}/tags/diseases?searchPattern={searchParameter}`
+- URL: `api/{organizationId}/{organizationAccountId}/tags/diseases?searchPattern={searchParameter}&sorting={sorting}`
 - Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
+- Region can be defined by header (use the most precise one from the list): `Accept-Region` with allowed values `other-world` `europe-eu` `europe-not-eu` `north-america` `ukr` `usa` `gbr`
+- Also array parameters (like `ids`) from request parameters list can be passed via standard rules
 
 **Request parameters:**
 
-- organizationId - Id of your organization.
-- organizationAccountId - account Id of your organization.
+- organizationId - Id of your organization. Required.
+- organizationAccountId - account Id of your organization. Required.
 - searchParameter - parameter to filter diseases by name.
+- sorting - parameter to sort diseases. Allowed values can be combined with `,`. Allowed values: `frequency asc` `frequency desc` `icd10 asc`, `icd10 desc`
+- ids - parameter to filter diseases by ids that are listed.
+- ignoreIds - parameter to filter diseases by ids that are not listed.
+- types - parameter to filter diseases by types that are listed.
+- ignoreTypes - parameter to filter diseases by types that are not listed.
 
-**Response** will contain array of DiseaseCombobox objects (array will contain no more than 50 items that corresponds to search parameter):
+**Response** will contain array of DiseaseCombobox objects (array will contain no more than 50 items that corresponds to request parameters):
 
 ```
 DiseaseCombobox
@@ -131,10 +138,11 @@ DiseaseCombobox
 
 **Request**
 
-`GET` `api/test/testpremium/tags/diseases?searchPattern=heart`
+`GET` `api/test/testpremium/tags/diseases?searchPattern=heart&sorting=frequency%20desc`
 
 Headers:
 - `Accept-Language`: `en`
+- `Accept-Region`: `europe-eu`
 
 **Response**
 
@@ -158,14 +166,21 @@ Headers:
 ### Medications
 
 - HTTP method: `GET`
-- URL: `api/{organizationId}/{organizationAccountId}/tags/medications?searchPattern={searchParameter}`
+- URL: `api/{organizationId}/{organizationAccountId}/tags/medications?searchPattern={searchParameter}&sorting={sorting}`
 - Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
+- Region can be defined by header (use the most precise one from the list): `Accept-Region` with allowed values `other-world` `europe-eu` `europe-not-eu` `north-america` `ukr` `usa` `gbr`
+- Also array parameters (like `ids`) from request parameters list can be passed via standard rules
 
 **Request parameters:**
 
-- organizationId - Id of your organization.
-- organizationAccountId - account Id of your organization.
+- organizationId - Id of your organization. Required.
+- organizationAccountId - account Id of your organization. Required.
 - searchParameter - parameter to filter diseases by name.
+- sorting - parameter to sort diseases. Allowed values can be combined with `,`. Allowed values: `frequency asc` `frequency desc` `atc asc`, `atc desc` `inn asc`, `inn desc`
+- ids - parameter to filter diseases by ids that are listed.
+- ignoreIds - parameter to filter diseases by ids that are not listed.
+- types - parameter to filter diseases by types that are listed.
+- ignoreTypes - parameter to filter diseases by types that are not listed.
 
 **Response** will contain array of MedicationCombobox objects (array will contain no more than 50 items that corresponds to search parameter):
 
@@ -208,6 +223,7 @@ MedicationCombobox
 
 Headers:
 - `Accept-Language`: `en`
+- `Accept-Region`: `europe-eu`
 
 **Response**
 
@@ -235,6 +251,7 @@ Headers:
 - HTTP method: `POST`
 - URL: `api/treatment-checker/generate/{organizationId}/{organizationAccountId}`
 - Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
+- Region can be defined by header (use the most precise one from the list): `Accept-Region` with allowed values `other-world` `europe-eu` `europe-not-eu` `north-america` `ukr` `usa` `gbr`
 
 ```
 Payload
