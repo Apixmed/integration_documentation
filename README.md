@@ -75,7 +75,7 @@ Diseases and medications are the required part of any treatment and Apixmed prov
 ### Diseases
 
 - HTTP method: `GET`
-- URL: `api/{organizationId}/{organizationAccountId}/tags/diseases?searchPattern={searchParameter}&sorting={sorting}`
+- URL: `api/query/{organizationId}/{organizationAccountId}/tags/diseases?searchPattern={searchParameter}&sorting={sorting}`
 - Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
 - Region can be defined by header (use the most precise one from the list): `Accept-Region` with allowed values `other-world` `europe-eu` `europe-not-eu` `north-america` `ukr` `usa` `gbr`
 - Also array parameters (like `ids`) from request parameters list can be passed via standard rules
@@ -138,7 +138,7 @@ DiseaseCombobox
 
 **Request**
 
-`GET` `api/test/testpremium/tags/diseases?searchPattern=heart&sorting=frequency%20desc`
+`GET` `api/query/test/testpremium/tags/diseases?searchPattern=heart&sorting=frequency%20desc`
 
 Headers:
 - `Accept-Language`: `en`
@@ -166,7 +166,7 @@ Headers:
 ### Medications
 
 - HTTP method: `GET`
-- URL: `api/{organizationId}/{organizationAccountId}/tags/medications?searchPattern={searchParameter}&sorting={sorting}`
+- URL: `api/query/{organizationId}/{organizationAccountId}/tags/medications?searchPattern={searchParameter}&sorting={sorting}`
 - Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
 - Region can be defined by header (use the most precise one from the list): `Accept-Region` with allowed values `other-world` `europe-eu` `europe-not-eu` `north-america` `ukr` `usa` `gbr`
 - Also array parameters (like `ids`) from request parameters list can be passed via standard rules
@@ -219,7 +219,7 @@ MedicationCombobox
 
 **Request**
 
-`GET` `api/test/testpremium/tags/medications?searchPattern=heart`
+`GET` `api/query/test/testpremium/tags/medications?searchPattern=heart`
 
 Headers:
 - `Accept-Language`: `en`
@@ -249,7 +249,7 @@ Headers:
 ### Endpoint information: request
 
 - HTTP method: `POST`
-- URL: `api/treatment-checker/generate/{organizationId}/{organizationAccountId}`
+- URL: `api/treatment-checker/reports/command/create/{organizationId}/{organizationAccountId}`
 - Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
 - Region can be defined by header (use the most precise one from the list): `Accept-Region` with allowed values `other-world` `europe-eu` `europe-not-eu` `north-america` `ukr` `usa` `gbr`
 
@@ -333,7 +333,7 @@ Response
 Also you are able to get the report as `json` via Apixmed API endpoint:
 
 - HTTP method: `GET`
-- URL: `api/treatment-checker/{organizationId}/reports/{reportId}`
+- URL: `api/treatment-checker/reports/query/{organizationId}/{organizationAccountId}/{reportId}`
 - Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
 
 ### Examples
@@ -370,7 +370,7 @@ PatientData object
 <details>
   <summary>Example of full payload</summary>
 
-`POST` `api/treatment-checker/generate/test/testpremium`
+`POST` `api/treatment-checker/reports/command/create/test/testpremium`
 
 Header:
   - `Accept-Language`: `en`
@@ -397,7 +397,7 @@ Header:
 
 Full request code
 ```
-POST /api/treatment-checker/generate/test/testpremium HTTP/1.1
+POST /api/treatment-checker/reports/command/create/test/testpremium HTTP/1.1
 Host: dev.api.apixmed.com
 Accept-Language: en
 Content-Type: application/json
@@ -465,7 +465,7 @@ There are two ways to show treatment checker history for your user:
 ### Endpoint information: retrieve treatment cheker history for user
 
 - HTTP method: `POST`
-- URL: `/api/treatment-checker/getbulk/{organizationId}/{organizationAccountId}`
+- URL: `/api/treatment-checker/reports/query-page/{organizationId}/{organizationAccountId}`
 - Language can be defined by header: `Accept-Language` with allowed values `en` `uk`
 
 ```
@@ -495,7 +495,7 @@ This string should be hashed with SHA512 (see [wikipedia](https://en.wikipedia.o
   <summary>Example of full request code</summary>
 
 ```
-POST /api/treatment-checker/getbulk/test/testpremium HTTP/1.1
+POST /api/treatment-checker/reports/query-page/test/testpremium HTTP/1.1
 Host: dev.api.apixmed.com
 Accept-Language: en
 Content-Type: application/json
